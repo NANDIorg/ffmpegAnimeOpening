@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/reset.css">
+    <link rel="stylesheet" href="https://cdn.plyr.io/3.6.12/plyr.css" />
+    <title>Создание видео для YouTube</title>
+</head>
+<body>
+    <div class="page-up">
+        <img src="image/arrow.svg" alt="">
+    </div>
+    <header class="header container">
+        <div class="page">
+            <div class="page__back">
+                <img src="image/arrow.svg" alt="">
+            </div>
+            <h1 class="page__title">
+                <img src="image/youtube_icon.svg">
+                <p class="page__name">Создание видео для YouTube</p>
+            </h1>
+        </div>
+    </header>
+
+    <main class="main container">
+        <div class="redactor">
+            <div class="redactor__group">
+                <div class="redactor-player">
+                    <video id="player" poster="image/imageop.jpg">
+                        Тег video не поддерживается вашим браузером. 
+                    </video>
+                </div>
+                <div class="redactor-content">
+                    <h3 class="redactor-content__heading">Выбранное аниме:</h3>
+                    <ul id="animelist" class="redactor-content-list">
+
+                    </ul>
+                </div>
+            </div>
+            <div class="redactor__group">
+                <div class="redactor-cut">
+                    <input id="rangeInput" oninput="video()" type="range" value="0" min="0" max="0">
+                </div>
+                <button class="redactor__button">
+                    <img src="image/create_video_icon.svg">
+                    <span>Создать</span>
+                </button>
+            </div>
+        </div>
+        
+    </main>
+
+    <script src="https://cdn.plyr.io/3.6.12/plyr.js"></script>
+    <script src="js/scroll.js"></script>
+    <script src="js/checkbox.js"></script>
+    <script src="js/jquery.js"></script>
+    <script src="js/redactor.js"></script>
+    <script src="js/navigation.js"></script>
+</body>
+</html>

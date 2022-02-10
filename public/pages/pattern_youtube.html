@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/reset.css">
+    <title>Шаблон YouTube</title>
+</head>
+<body>
+    <div class="page-up">
+        <img src="image/arrow.svg" alt="">
+    </div>
+    <header class="header container header_mp">
+        <div class="page">
+            <div class="page__back">
+                <img src="image/arrow.svg" alt="">
+            </div>
+            <h1 class="page__title">
+                <img src="image/youtube_icon.svg">
+                <p class="page__name">Шаблон для YouTube</p>
+            </h1>
+        </div>
+        <div class="video-controls">
+            <button class="video-controls__item">
+                <img src="image/random_icon.svg">
+                <span class="video-controls__name">Зарандомить</span>
+            </button>
+            <button class="video-controls__item" onclick="createVidos()">
+                <img src="image/create_video_icon.svg">
+                <span class="video-controls__name">Сделать видео</span>
+            </button>
+        </div>
+    </header>
+
+    <main class="main container">
+        <ul class="videos" id="list_anime">
+            
+        </ul>
+
+        <div class="filters-wrapper">
+            <aside class="filters">
+                <div class="filters__group">
+                    <label for="opening_title" class="filters__label">Название</label>
+                    <input onchange="getVideosParametr()" type="text" name="opening_title" id="nameAnimeParm" class="filters__input">
+                </div>
+                <div class="filters__group">
+                    <label for="genres" class="filters__label">Жанры</label>
+                    <div name="genres" class="checkbox-list" id="genresDiv">
+                        
+                    </div>
+                </div>
+                <div class="filters__group">
+                    <label for="release_date" class="filters__label">Дата релиза</label>
+                    <input type="text" onchange="getVideosParametr()" id="yearFilter" name="release_date" class="filters__input">
+                </div>
+                <div class="filters__group">
+                    <label for="seasons" class="filters__label">Сезон</label>
+                    <div class="select__wrapper">
+                        <div id="seasonFilter" data-value="Не выбрано" class="select__button">
+                            <span>Выберите сезон</span>
+                            <img src="image/arrow.svg">
+                        </div>
+                        <ul class="select-list">
+                            <li class="select-list__item">Не выбрано</li>
+                            <li class="select-list__item">Лето</li>
+                            <li class="select-list__item">Осень</li>
+                            <li class="select-list__item">Зима</li>
+                            <li class="select-list__item">Весна</li>
+                        </ul>
+                    </div>
+                </div>
+            </aside>
+        </div>
+        
+    </main>
+</body>
+
+<script src="js/filterCheckbox.js"></script>
+<script src="js/jquery.js"></script>
+<script src="js/filterSelect.js"></script>
+<script src="js/scroll.js"></script>
+<script src="js/navigation.js"></script>
+
+<script>
+    const arrOpening = []
+
+    $.ajax({
+        url: "/getGenres",
+        type: "GET",
+        success: (result) => {
+            htmlText = ""
+            result.forEach(el => {
+                htmlText += `<div class="checkbox" id="${el.id}" data-checked="0">
+                            <div class="checkbox__input">
+                                
+                            </div>
+                            <span class="checkbox__name">${el.name}</span>
+                        </div>`
+            })
+            genresDiv.innerHTML = htmlText
+            setOnClickCheckbox()
+        }
+    })
+
+    $.ajax({
+        url: "/getVideo",
+        type: "GET",
+        success: (result) => {
+            htmlText = ""
+            result.forEach(el => {
+                let genres = ""
+                JSON.parse(el.genres).forEach(el2 => {
+                    genres += ', ' + el2 + ''
+                })
+                let genresArr = genres.split('')
+                genresArr.splice(0,1)
+                htmlText += `
+                    <li class="videos__item" onclick="video(this.id)" id="${el.id}">
+                        <div class="videos__image">
+                            <img src="screnshot/${el.id}.png">
+                        </div>
+                        <div class="videos__info">
+                            <h2 class="videos__title">${el.name_ru}</h2>
+                            <p class="videos__genres">Жанры: ${genresArr.join('')}</p>
+                            <date class="videos__release">Год выпуска: ${el.year}</date>
+                        </div>
+                    </li>`
+            })
+            list_anime.innerHTML = htmlText   
+        }
+    })
+
+    function video(id) {
+        if (arrOpening.includes(id)) {
+            document.getElementById(id).style.background = '#141416'
+            let i = arrOpening.indexOf(id)
+            arrOpening.splice(i, 1)
+            console.log(arrOpening)
+        } else {
+            arrOpening.push(id)
+            document.getElementById(id).style.background = '#093303'
+            console.log(arrOpening)
+        }
+        localStorage.setItem('opening',JSON.stringify(arrOpening))
+    }
+    function createVidos() {
+        location.href = "/youtube_redactor"
+    }
+</script>
+</html>

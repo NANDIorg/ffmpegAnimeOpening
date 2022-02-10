@@ -1,0 +1,73 @@
+@use "./_vars.scss" as vars;
+
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+}
+
+.wrapper {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+}
+
+.container {
+    position: relative;
+    max-width: 1300px;
+    padding: 0 10px;
+    margin: 0 auto;
+}
+
+.header,
+.main {
+    position: relative;
+    display: flex;
+}
+
+.header {
+    flex-direction: column;
+    width: 635px;
+    margin-top: 35px;
+    &_mp {
+        margin-bottom: 105px;
+    }
+}
+
+body {
+    background-color: vars.$bodyColor;
+}
+
+.page-up {
+    $size: 60px;
+    position: fixed;
+    display: none;
+    justify-content: center;
+    align-items: center;
+    width: $size;
+    height: $size;
+    right: 30px;
+    bottom: 30px;
+    background-color: vars.$blockColor;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity .2s linear;
+    cursor: pointer;
+
+    img {
+        max-width: 10px;
+        transform: rotate(90deg);
+    }
+
+    &_show {
+        display: flex;
+        opacity: 1;
+        pointer-events: initial;
+        
+    }
+}
+
+.page-up:hover {
+    background-color: transparentize(vars.$blockColor, 0.2);
+}

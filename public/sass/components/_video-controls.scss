@@ -1,0 +1,37 @@
+@use "../base/_vars.scss" as vars;
+@use "../base/_selectors.scss";
+
+.video-controls {
+    top: 130px;
+    display: flex;
+    gap: 15px;
+    width: 615px;
+    height: 60px;
+
+    &__item {
+        @extend %controls-reset;
+        display: flex;
+        align-items: center;
+        width: 100%;
+        background-color: transparentize(vars.$blockColor, 0.2)!important;
+        padding: 0 20px;
+        cursor: pointer;
+        transition: background-color .2s linear;
+
+        img {
+            max-width: 30px;
+        }
+    }
+
+    &__item:hover {
+        background-color: opacify(vars.$blockColor, 0.2)!important;
+    }
+
+    &__name {
+        color: vars.$textColor;
+        font-size: 18px;
+        font-family: vars.$roboto;
+        width: 100%;
+        text-align: center;
+    }
+}

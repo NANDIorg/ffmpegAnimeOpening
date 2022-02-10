@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/reset.css">
+    <title>Загрука опенинга</title>
+</head>
+<body>
+    <div class="waiting" id="waiting"></div>
+    <div class="page-up">
+        <img src="image/arrow.svg" alt="">
+    </div>
+    <header class="header container">
+        <div class="page">
+            <div class="page__back">
+                <img src="image/arrow.svg" alt="">
+            </div>
+            <h1 class="page__title">
+                <img src="image/download_icon.svg">
+                <p class="page__name">Загрузка опенинга</p>
+            </h1>
+        </div>
+    </header>
+
+    <main class="main container">
+        <div class="upload">
+            <div class="upload__group">
+                <div class="upload__media">
+                    <div class="upload__fill">
+                        <img src="image/plus_icon.svg">
+                        <span>Загрузить видео</span>
+                    </div>
+                    <input type="file" class="upload__file" name="video">
+                </div>
+                <div class="upload__media">
+                    <div class="upload__fill">
+                        <img src="image/plus_icon.svg">
+                        <span>Загрузить изображение</span>
+                    </div>
+                    <input type="file" class="upload__file" name="image">
+                </div>
+            </div>
+            <div class="upload__group">
+                <div class="upload__controls">
+                    <div class="upload__form-group">
+                        <label for="rus_name" class="upload__label">Название (кириллица)</label>
+                        <input type="text" class="upload__input" name="rus_name">
+                    </div>
+                    <div class="upload__form-group">
+                        <label for="eng_name" class="upload__label">Название (латиница)</label>
+                        <input type="text" class="upload__input" name="eng_name">
+                    </div>
+                </div>
+                <div class="checkboxes">
+                    <!-- <input type="hidden" name="genres"> -->
+                    <h2 class="checkboxes__title">Жанры</h2>
+                    <div class="checkbox-list" id='genresDiv'>
+                        
+                    </div>
+                </div>
+            </div>
+            <div class="upload__group">
+                <div class="upload__controls">
+                    <div class="upload__form-group">
+                        <label for="release_date" class="upload__label">Дата релиза:</label>
+                        <input type="text" class="upload__input" name="release_date">
+                    </div>
+                </div>
+                <div class="upload__controls">
+                    <div class="upload__form-group">
+                        <label for="season" class="upload__label">Сезон:</label>
+                        <!-- <input type="hidden" name="season"> -->
+                        <div class="select__wrapper">
+                            <div id="seasonFilter" data-value="Не выбрано" class="select__button">
+                                <span>Выберите сезон</span>
+                                <img src="image/arrow.svg">
+                            </div>
+                            <ul class="select-list">
+                                <li class="select-list__item">Не выбрано</li>
+                                <li class="select-list__item">Лето</li>
+                                <li class="select-list__item">Осень</li>
+                                <li class="select-list__item">Зима</li>
+                                <li class="select-list__item">Весна</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                
+            </div>
+            <button type="submit" class="upload__button" onclick="uploadAnime(this)">
+                Загрузить
+            </button>
+        </div>
+    </main>
+</body>
+
+
+<script src="js/scroll.js"></script>
+<script src="js/checkbox.js"></script>
+<script src="js/upload.js"></script>
+<script src="js/select.js"></script>
+<script src="js/uploadPreview.js"></script>
+<script src="js/jquery.js"></script>
+<script src="js/navigation.js"></script>
+
+<script>
+    $.ajax({
+        url: "/getGenres",
+        type: "GET",
+        success: (result) => {
+            htmlText = ""
+            result.forEach(el => {
+                htmlText += `<div class="checkbox" id="${el.id}" data-checked="0">
+                            <div class="checkbox__input">
+                                
+                            </div>
+                            <span class="checkbox__name">${el.name}</span>
+                        </div>`
+            })
+            genresDiv.innerHTML = htmlText
+            setOnClickCheckbox()
+        }
+    })
+
+    function uploadAnime () {
+        waiting.style.display = "block"
+        const videoAnime = document.getElementsByName('video')[0].files[0]
+        const imageAnime = document.getElementsByName('image')[0].files[0]
+        const ruNameAnime = document.getElementsByName('rus_name')[0].value
+        const enNameAnime = document.getElementsByName('eng_name')[0].value
+        const genresAnime = genresArray
+        const yearAnime = document.getElementsByName('release_date')[0].value
+        const seasonAnime = document.getElementById('seasonFilter').dataset.value
+        const jsonAnime = {
+            imgName : imageAnime.name,
+            videoName : videoAnime.name,
+            ruName : ruNameAnime,
+            enName : enNameAnime,
+            genresAnime : genresAnime,
+            yearAnime : yearAnime,
+            seasonAnime : seasonAnime
+        }
+        const data = new FormData();
+        data.append("image", imageAnime);
+        data.append("image", videoAnime);
+        data.append("info", JSON.stringify(jsonAnime));
+        $.ajax({
+            url: "/uploadAnime",
+            method: 'POST',
+            async: false,
+            processData: false ,
+            mimeType: "multipart/form-data",
+            contentType: false,
+            data: data,
+            success : function (res) {
+                if (JSON.parse(res).status == 200) {
+                    waiting.style.display = "none"
+                    location.href = '/'
+                } else {
+                    console.log(JSON.parse(res));
+                }
+            }
+        })
+    }
+</script>
+
+</html>

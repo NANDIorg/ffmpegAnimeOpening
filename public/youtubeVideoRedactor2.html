@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://cdn.plyr.io/3.6.12/plyr.css" />
+    <title>Редактор шаблона YouTube</title>
+    <style>
+        #animelist>span {
+            cursor: pointer;
+            padding: 5px;
+            border: 1px solid black;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div id="animelist"></div>
+    <video id="player" class="video-js" preload="metadata"></video>
+    <input type="range" oninput="video()" min="0" max="0" value="0" id="rangeInput">
+    <span id="time"></span>
+    <button onclick="create()">Создать</button>
+</body>
+<script src="js/jquery.js"></script>
+<script src="https://cdn.plyr.io/3.6.12/plyr.js"></script>
+<script>
+    const player = new Plyr('#player')
+    let idOpening
+
+    player.on('loadedmetadata',()=>{
+        console.log('ok')
+        rangeInput.max = player.duration
+        jsonop = JSON.parse(localStorage.getItem('openingJSON'))
+        for (el in jsonop) {
+            if (el === idOpening) {
+                rangeInput.value = jsonop[el].startTime
+                console.log(jsonop[el].startTime, el, rangeInput.value)
+            }
+        }
+        player.currentTime = Number(rangeInput.value)
+    })
+    
+    player.on('timeupdate',()=>{
+        if (player.currentTime >= (Number(rangeInput.value)+20)) {
+            player.currentTime = Number(rangeInput.value)
+        }
+    })
+
+    function video () {
+        time.innerText = rangeInput.value
+        player.currentTime = Number(rangeInput.value)
+        jsonop = JSON.parse(localStorage.getItem('openingJSON'))
+        for (el in jsonop) {
+            if (el === idOpening) {
+                jsonop[el].startTime = Number(rangeInput.value)
+            }
+        }
+        localStorage.setItem('openingJSON',JSON.stringify(jsonop))
+    }
+
+    function animeChange(id) { 
+        idOpening = id
+        player.source = {
+            type: 'video',
+            title: 'Example title',
+            sources: [
+                {
+                    src: `videos/${id}.mp4`,
+                    type: 'video/mp4'
+                }
+            ],
+            poster : `screnshot/${id}.png`
+        }
+        
+    }
+
+    function create () {
+        $.ajax({
+            url: "/createVideo",
+            type: "POST",
+            data: localStorage.getItem('openingJSON'),
+            contentType: "application/json",
+            success : (res) => {
+                console.log(res)
+            }
+        })
+    }
+    
+    const arrOpening = JSON.parse(localStorage.getItem('opening'))
+    htmlTextAnime = ``
+    jsonOpening = {}
+    arrOpening.forEach(el => {
+        htmlTextAnime += `
+            <span class='spanAnime' id="${el}" onclick="animeChange(this.id)">${el}</span>
+        `;
+        jsonOpening[el] = {
+            id : el,
+            startTime : 0
+        }
+    })
+    document.getElementById('animelist').innerHTML = htmlTextAnime
+    localStorage.setItem('openingJSON',JSON.stringify(jsonOpening))
+    console.log(JSON.parse(localStorage.getItem('openingJSON')))
+</script>
+
+</html>

@@ -1,0 +1,13 @@
+@use "../../base/_vars.scss" as vars;
+
+@font-face {
+    font-family: vars.$raleway;
+    src: url("../fonts/Raleway/Raleway-Regular.ttf");
+    font-weight: 400;
+}
+
+@font-face {
+    font-family: vars.$raleway;
+    src: url("../fonts/Raleway/Raleway-Medium.ttf");
+    font-weight: 700;
+}
