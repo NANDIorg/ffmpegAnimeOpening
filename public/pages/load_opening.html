@@ -147,6 +147,7 @@
         data.append("image", imageAnime);
         data.append("image", videoAnime);
         data.append("info", JSON.stringify(jsonAnime));
+        console.log(jsonAnime);
         $.ajax({
             url: "/uploadAnime",
             method: 'POST',

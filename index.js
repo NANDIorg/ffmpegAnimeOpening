@@ -13,10 +13,6 @@ fs.readFile(path.join(__dirname, 'assets/genres.json'), (err, obj) => {
     })
 });
 
-let readyOpening = false
-let readyResOpening = false
-let ready = true
-
 const storageConfig = multer.diskStorage({
     destination: (req, file, cb) =>{
         if (file.mimetype == "video/mp4") {
@@ -176,21 +172,24 @@ app.get('/getVideosParametr', (req, res)=>{
 /////////////////////////////////////////////
 
 app.post('/uploadAnime',uploadImage.fields([{ name: 'image', maxCount: 2 },{ name: 'info', maxCount: 1 }]), (req, res) => {
-    // console.log(JSON.parse(req.body.info))
+    console.log(JSON.parse(req.body.info))
     const infoAnime = JSON.parse(req.body.info)
     try {
-        const nameFileAnime = infoAnime.enName.split('').join('')
+        const nameFileAnime = infoAnime.enName.split(' ').join('')
         execSync(`REN "${path.join(__dirname,'assets/videos/_'+infoAnime.videoName)}" ${nameFileAnime}.mp4`)
-        execSync(`ffmpeg -i ${path.join(__dirname,'assets/videos/'+nameFileAnime)}.mp4 -b:v 4000k -r 60 ${path.join(__dirname,'assets/videos/'+nameFileAnime)}.ts`)
+        console.log(nameFileAnime);
+        execSync(`ffmpeg -i ${path.join(__dirname,'assets/videos/'+nameFileAnime)}.mp4 -b:v 4000k -r 60 -vf drawtext="x=10:y=10:borderw=3:bordercolor=black:fontfile=public/font/Obelix-Pro.ttf:text='${infoAnime.ruName}':fontsize=24:fontcolor=white" ${path.join(__dirname,'assets/videos/'+nameFileAnime)}.ts`)
+        console.log("Mp4 в ts с текстом");
         execSync(`REN "${path.join(__dirname,'assets/screnshot/_'+infoAnime.imgName)}" ${nameFileAnime}.png`)
+        console.log("Переименован файл png");
         fs.readFile(path.join(__dirname, 'assets/anime.json'), (err, obj) => {
             let jsonDBAnime = JSON.parse(obj)
             let genresAnime = []
             infoAnime.genresAnime.forEach(element => {
                 genresAnime.push(genresArray[element].name)
             });
-            jsonDBAnime[infoAnime.enName.split('').join('')] = {
-                "id" : `${infoAnime.enName.split('').join('')}`,
+            jsonDBAnime[infoAnime.enName.split(' ').join('')] = {
+                "id" : `${infoAnime.enName.split(' ').join('')}`,
                 "name_ru" : `${infoAnime.ruName}`,
                 "name_en" : `${infoAnime.enName}`,
                 "year" : Number(infoAnime.yearAnime),
@@ -209,47 +208,34 @@ app.post('/uploadAnime',uploadImage.fields([{ name: 'image', maxCount: 2 },{ nam
                 body : {}
             })
         })
-    } catch {
+    } catch (err) {
+        console.log(err);
         res.send({
             status : 500,
-            body : {}
+            body : {
+                err: err
+            }
         })
     }
 })
 
 app.post('/createVideo', (req, res) => {
-    if (!ready) {
-        res.send('Иди нафиг')
-        return
-    }
-    ready = false
     let arr = req.body
     console.log(arr)
     const datanow = new Date()
     const nameFile = `${datanow.getFullYear()}-${datanow.getMonth()}-${datanow.getDate()}_${datanow.getHours()}-${datanow.getMinutes()}-${datanow.getSeconds()}`
     resultObrezVideos(nameFile,arr)
-    textAnime = ``
+    textAnime = `file 'start.ts'\n`
     for (el in arr) {
-        textAnime += `file 'results/${nameFile}/${el}_res1.ts'\n`
-        textAnime += `file 'results/${nameFile}/${el}_res2.ts'\n`
+        textAnime += `file 'results/${nameFile}/${el}_res3.ts'\n`
+        textAnime += `file 'results/${nameFile}/${el}_video2.ts'\n`
     }
-    fs.writeFile(path.join(__dirname, `assets/file.txt`), textAnime, (err) => {
+    textAnime += `file 'end.ts'`
+    fs.writeFileSync(path.join(__dirname, `assets/file.txt`), textAnime, (err) => {
         console.log('файл записан')
     })
-    let intervatTime = setInterval(()=>{
-        if (readyOpening) {
-            console.log(readyOpening)
-            readyOpening = false
-            createVideoRes(nameFile, arr)
-        }
-        if (readyResOpening) {
-            readyResOpening = false
-            console.log(readyResOpening)
-            createResultatVideo(nameFile)
-            clearTimeout(intervatTime)
-            
-        }
-    },500)
+    createVideoRes(nameFile, arr)
+    createResultatVideo(nameFile)
     res.end()
 })
 
@@ -265,40 +251,35 @@ app.listen(3000)
 
 function createResultatVideo (nameFile) {
     console.log(`ffmpeg -f concat -i ${`assets/file.txt`} -c copy ${path.join(__dirname, `assets/results/`)+nameFile}.ts`)
-    exec(`ffmpeg -f concat -i ${`assets/file.txt`} -c copy ${path.join(__dirname, `assets/results/`)+nameFile}.ts`,(error, stdout, stderr) => {
+    execSync(`ffmpeg -f concat -i ${`assets/file.txt`} -c copy ${path.join(__dirname, `assets/results/`)+nameFile}.ts`,(error, stdout, stderr) => {
+        if (error) {
+            console.log(`error: ${error.message}`,500);
+            return;
+        }
+        if (stderr) {
+            console.log(200,`ffmpeg -i ${path.join(__dirname, `assets/results/`)+nameFile}.ts ${path.join(__dirname, `assets/results/`)+nameFile}.mp4`);
+            return;
+        }
+        console.log(`stdout: ok concat`,200);
+        
+    })
+    execSync(`ffmpeg -i ${path.join(__dirname, `assets/results/`)+nameFile}.ts ${path.join(__dirname, `assets/results/`)+nameFile}.mp4`,(error, stdout, stderr) => {
         if (error) {
             console.log(`error: ${error.message}`);
             return;
         }
         if (stderr) {
-            exec(`ffmpeg -i ${path.join(__dirname, `assets/results/`)+nameFile}.ts -b:v 4000k -r 60 ${path.join(__dirname, `assets/results/`)+nameFile}.mp4`,(error, stdout, stderr) => {
-                if (error) {
-                    console.log(`error: ${error.message}`);
-                    return;
-                }
-                if (stderr) {
-                    console.log(200)
-                    exec(`rd /q /s ${path.join(__dirname, 'assets/results/'+nameFile)}`)
-                    exec(`del ${path.join(__dirname, 'assets/results/'+nameFile)}.ts`)
-                    ready = true
-                    return;
-                }
-                console.log(`stdout: ts`);
-            })
+            console.log(200)
             return;
         }
-        console.log(`stdout: ok concat`);
-        
+        console.log(`stdout: ts`);
     })
+    exec(`rd /q /s ${path.join(__dirname, 'assets/results/'+nameFile)}`)
+    exec(`del ${path.join(__dirname, 'assets/results/'+nameFile)}.ts`)
 }
 
 function resultObrezVideos (nameDir, obj) {
-    let i = 0
-    let i2 = 0
-    for (el in obj) {
-        i = i + 1
-    }
-    exec(`mkdir ${path.join(__dirname, `assets/results/`)+nameDir}`, (err, stdout, stderr) => {
+    execSync(`mkdir ${path.join(__dirname, `assets/results/`)+nameDir}`, (err, stdout, stderr) => {
         if (err) {
             console.log(`error: ${err.message}`);
             return;
@@ -309,47 +290,36 @@ function resultObrezVideos (nameDir, obj) {
         }
         console.log(200, 'mkdir')
         console.log(`stdout: ts`)
-        for (el in obj) {
-            nameOp = el
-            exec(`ffmpeg -ss ${obj[el].startTime} -i ${path.join(__dirname, `assets/videos/`+el)}.ts -b:v 4000k -r 60 -t 10 ${path.join(__dirname,`assets/results/`+nameDir+`/`+el+`_video1`)}.ts`, (err, stdout, stderr) => {
-                if (err) {
-                    console.log(`error: ${err.message}`);
-                    return;
-                }
-                if (stderr) {
-                    console.log(200, 'ffmpegObrez')
-                    return;
-                }
-            })
-            exec(`ffmpeg -ss ${obj[el].startTime+10} -i ${path.join(__dirname, `assets/videos/`+el)}.ts -b:v 4000k -r 60 -t 10 ${path.join(__dirname,`assets/results/`+nameDir+`/`+el+`_video2`)}.ts`, (err, stdout, stderr) => {
-                i2 = i2 + 1
-                
-                if (err) {
-                    console.log(`error: ${err.message}`);
-                    return;
-                }
-                if (stderr) {
-                    console.log(200, 'ffmpegObrez')
-                    if (i == i2) {
-                        readyOpening = true;
-                    }
-                    return;
-                }
-            })
-        }
-        
     })
+    for (el in obj) {
+        nameOp = el
+        execSync(`ffmpeg -ss ${obj[el].startTime} -i ${path.join(__dirname, `assets/videos/`+el)}.ts -b:v 4000k -r 60 -t 10 ${path.join(__dirname,`assets/results/`+nameDir+`/`+el+`_video1`)}.ts`, (err, stdout, stderr) => {
+            if (err) {
+                console.log(`error: ${err.message}`);
+                return;
+            }
+            if (stderr) {
+                console.log(200, 'ffmpegObrez')
+                return;
+            }
+        })
+        execSync(`ffmpeg -ss ${obj[el].startTime+10} -i ${path.join(__dirname, `assets/videos/`+el)}.ts -af afade=t=out:st=9:d=1 -t 10 -b:v 4000k -r 60 ${path.join(__dirname,`assets/results/`+nameDir+`/`+el+`_video2`)}.ts`, (err, stdout, stderr) => {
+            if (err) {
+                console.log(`error: ${err.message}`);
+                return;
+            }
+            if (stderr) {
+                console.log(200, 'ffmpegObrez')
+                return;
+            }
+        })
+    }
 }
 
 function createVideoRes (nameDir, obj) {
-    let i = 0
-    let i2 = 0
-    for (el in obj) {
-        i = i + 1
-    }
     for (el in obj) {
         nameOp = el
-        exec(`ffmpeg -i ${path.join(__dirname,`assets/results/`+nameDir+`/`+el+`_video1`)}.ts -i ${path.join(__dirname, `public/img/imageop.jpg`)} -b:v 4000k -r 60 -filter_complex "[0:v][1:v]overlay" ${path.join(__dirname,`assets/results/`+nameDir+`/`+el+`_res1`)}.ts`, (err, stdout, stderr) => {
+        execSync(`ffmpeg -i ${path.join(__dirname,`assets/results/`+nameDir+`/`+el+`_video1`)}.ts -i ${path.join(__dirname, `public/img/imageop.jpg`)} -b:v 4000k -r 60 -filter_complex "[0:v][1:v]overlay" ${path.join(__dirname,`assets/results/`+nameDir+`/`+el+`_res1`)}.ts`, (err, stdout, stderr) => {
             if (err) {
                 console.log(`error: ${err.message}`);
                 return;
@@ -359,20 +329,17 @@ function createVideoRes (nameDir, obj) {
                 return;
             }
         })
-        exec(`ffmpeg -i ${path.join(__dirname,`assets/results/`+nameDir+`/`+el+`_video2`)}.ts -b:v 4000k -r 60 -vf drawtext="x=10:y=10:borderw=3:bordercolor=black:fontfile=${path.join(__dirname,'public/font/Releway.ttf')}:text='${el}':fontsize=50:fontcolor=white" ${path.join(__dirname,`assets/results/`+nameDir+`/`+el+`_res2`)}.ts`, (err, stdout, stderr) => {
-            i2 = i2 + 1
-            
+        execSync(`ffmpeg -i ${path.join(__dirname,`assets/results/`+nameDir+`/`+el+`_res1`)}.ts -i ${path.join(__dirname, `public/img/10sec.ts`)} -b:v 4000k -r 60 -filter_complex "[1:v]colorkey=0x000000:0.3:0.2[timer];[0:v][timer]overlay" ${path.join(__dirname,`assets/results/`+nameDir+`/`+el+`_res2`)}.ts`,(err, stdout, stderr)=>{
             if (err) {
                 console.log(`error: ${err.message}`);
                 return;
             }
             if (stderr) {
                 console.log(200, 'ffmpegObr')
-                if (i == i2) {
-                    readyResOpening = true;
-                }
                 return;
             }
+            console.log(200);
         })
+        execSync(`ffmpeg -i ${path.join(__dirname,`assets/results/`+nameDir+`/`+el+`_res2`)}.ts -b:v 4000k -r 60 -t 10 ${path.join(__dirname,`assets/results/`+nameDir+`/`+el+`_res3`)}.ts`)
     }
 }

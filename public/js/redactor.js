@@ -23,6 +23,18 @@ player.on('timeupdate',()=>{
     }
 })
 
+function create () {
+    $.ajax({
+        url: "/createVideo",
+        type: "POST",
+        data: localStorage.getItem('openingJSON'),
+        contentType: "application/json",
+        success : (res) => {
+            console.log(res)
+        }
+    })
+}
+
 function animeChange(id) { 
     idOpening = id
     player.controls = [
