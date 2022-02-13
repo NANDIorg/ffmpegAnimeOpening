@@ -1,2 +1,0 @@
-file 'results/2022-1-7_23-32-51/SwordArtOnline2_res1.ts'
-file 'results/2022-1-7_23-32-51/SwordArtOnline2_res2.ts'
