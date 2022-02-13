@@ -1,4 +1,0 @@
-file 'start.ts'
-file 'results/2022-1-13_15-55-8/TribeNine_res3.ts'
-file 'results/2022-1-13_15-55-8/TribeNine_video2.ts'
-file 'end.ts'
