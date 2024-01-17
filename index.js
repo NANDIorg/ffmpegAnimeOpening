@@ -6,6 +6,8 @@ const bodyParser = require('body-parser')
 const { exec, execSync } = require('child_process')
 const multer  = require("multer");
 const genresArray = {}
+const pathToFfmpeg = require('ffmpeg-static')
+console.log(pathToFfmpeg)
 
 fs.readFile(path.join(__dirname, 'assets/genres.json'), (err, obj) => {
     JSON.parse(obj)['genres'].forEach(el => {
@@ -15,9 +17,12 @@ fs.readFile(path.join(__dirname, 'assets/genres.json'), (err, obj) => {
 
 const storageConfig = multer.diskStorage({
     destination: (req, file, cb) =>{
+        console.log(file.mimetype)
         if (file.mimetype == "video/mp4") {
             cb(null, "assets/videos/"); 
         } else if (file.mimetype == "image/png") {
+            cb(null, "assets/screnshot/");
+        } else if (file.mimetype == "image/jpeg") {
             cb(null, "assets/screnshot/");
         }
         
@@ -225,12 +230,13 @@ app.post('/createVideo', (req, res) => {
     const datanow = new Date()
     const nameFile = `${datanow.getFullYear()}-${datanow.getMonth()}-${datanow.getDate()}_${datanow.getHours()}-${datanow.getMinutes()}-${datanow.getSeconds()}`
     resultObrezVideos(nameFile,arr)
-    textAnime = `file 'start.ts'\n`
+    // textAnime = `file 'start.ts'\n`
+    textAnime = ''
     for (el in arr) {
         textAnime += `file 'results/${nameFile}/${el}_res3.ts'\n`
         textAnime += `file 'results/${nameFile}/${el}_video2.ts'\n`
     }
-    textAnime += `file 'end.ts'`
+    // textAnime += `file 'end.ts'`
     fs.writeFileSync(path.join(__dirname, `assets/file.txt`), textAnime, (err) => {
         console.log('файл записан')
     })
