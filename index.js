@@ -1,3 +1,5 @@
+import { createRequire } from 'module';
+const require = createRequire(import.meta.url);
 const express = require('express')
 const app = express()
 const path = require('path')
@@ -6,8 +8,24 @@ const bodyParser = require('body-parser')
 const { exec, execSync } = require('child_process')
 const multer  = require("multer");
 const genresArray = {}
-const pathToFfmpeg = require('ffmpeg-static')
-console.log(pathToFfmpeg)
+import { fileURLToPath } from 'url';
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+import {createTicTokVersion} from './createTicTokVersion.js'
+
+import sqlite3 from 'sqlite3'
+import { open } from 'sqlite'
+
+let db
+
+async function openDB() {
+    db = await open({
+        filename: 'anime.db',
+        driver: sqlite3.Database
+    })
+}
+
+await openDB()
 
 fs.readFile(path.join(__dirname, 'assets/genres.json'), (err, obj) => {
     JSON.parse(obj)['genres'].forEach(el => {
@@ -98,14 +116,8 @@ app.get('/upload', (req, res) => {
 ///////////////////   GET   ////////////////
 ////////////////////////////////////////////
 
-app.get('/getVideo', (req, res) => {
-    fs.readFile(path.join(__dirname, 'assets/anime.json'), (err, obj) => {
-        let arrAnime = [];
-        for (el in JSON.parse(obj)) {
-            arrAnime.push(JSON.parse(obj)[el]);
-        }
-        res.send(arrAnime);
-    });
+app.get('/getVideo', async (req, res) => {
+    res.send(await db.all(`SELECT * FROM anime`));
 });
 
 app.get('/getGenres', (req, res) => {
@@ -119,11 +131,8 @@ app.get('/downloadVideo/:id', (req, res) => {
     res.download(path.join(__dirname, `assets/videos/${req.params.id}.mp4`));
 })
 
-app.get('/getVideo/:id', (req, res)=>{
-    fs.readFile(path.join(__dirname, 'assets/anime.json'), (err, obj) => {
-        const animeDate = JSON.parse(obj);
-        res.send(animeDate[req.params.id]);
-    })
+app.get('/getVideo/:id', async (req, res)=>{
+    res.send(await db.get(`SELECT * FROM anime WHERE "id" = ${req.params.id}`));
 })
 
 app.get('/getVideosParametr', (req, res)=>{
@@ -224,15 +233,28 @@ app.post('/uploadAnime',uploadImage.fields([{ name: 'image', maxCount: 2 },{ nam
     }
 })
 
-app.post('/createVideo', (req, res) => {
-    let arr = req.body
+app.post('/createVideo', async (req, res) => {
+    let arr = JSON.parse(req.body['openings'])
+    let tictokCreate = req.body['tictokCreate']
     console.log(arr)
+    if (tictokCreate) {
+        let openingArray = []
+        for (let el in arr) {
+            openingArray.push(arr[el])
+        }
+        await createTicTokVersion(openingArray)
+        res.end()
+        return
+    }
+    console.log(1)
+    res.end()
+    return
     const datanow = new Date()
     const nameFile = `${datanow.getFullYear()}-${datanow.getMonth()}-${datanow.getDate()}_${datanow.getHours()}-${datanow.getMinutes()}-${datanow.getSeconds()}`
-    resultObrezVideos(nameFile,arr)
+    // resultObrezVideos(nameFile,arr)
     // textAnime = `file 'start.ts'\n`
-    textAnime = ''
-    for (el in arr) {
+    let textAnime = ''
+    for (let el in arr) {
         textAnime += `file 'results/${nameFile}/${el}_res3.ts'\n`
         textAnime += `file 'results/${nameFile}/${el}_video2.ts'\n`
     }
@@ -240,8 +262,8 @@ app.post('/createVideo', (req, res) => {
     fs.writeFileSync(path.join(__dirname, `assets/file.txt`), textAnime, (err) => {
         console.log('файл записан')
     })
-    createVideoRes(nameFile, arr)
-    createResultatVideo(nameFile)
+    // createVideoRes(nameFile, arr)
+    // createResultatVideo(nameFile)
     res.end()
 })
 
@@ -297,8 +319,8 @@ function resultObrezVideos (nameDir, obj) {
         console.log(200, 'mkdir')
         console.log(`stdout: ts`)
     })
-    for (el in obj) {
-        nameOp = el
+    for (let el in obj) {
+        let nameOp = el
         execSync(`ffmpeg -ss ${obj[el].startTime} -i ${path.join(__dirname, `assets/videos/`+el)}.ts -b:v 4000k -r 60 -t 10 ${path.join(__dirname,`assets/results/`+nameDir+`/`+el+`_video1`)}.ts`, (err, stdout, stderr) => {
             if (err) {
                 console.log(`error: ${err.message}`);
@@ -323,8 +345,8 @@ function resultObrezVideos (nameDir, obj) {
 }
 
 function createVideoRes (nameDir, obj) {
-    for (el in obj) {
-        nameOp = el
+    for (let el in obj) {
+        let nameOp = el
         execSync(`ffmpeg -i ${path.join(__dirname,`assets/results/`+nameDir+`/`+el+`_video1`)}.ts -i ${path.join(__dirname, `public/img/imageop.jpg`)} -b:v 4000k -r 60 -filter_complex "[0:v][1:v]overlay" ${path.join(__dirname,`assets/results/`+nameDir+`/`+el+`_res1`)}.ts`, (err, stdout, stderr) => {
             if (err) {
                 console.log(`error: ${err.message}`);

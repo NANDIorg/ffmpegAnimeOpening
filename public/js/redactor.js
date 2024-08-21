@@ -6,28 +6,30 @@ const player = new Plyr('#player',{
 })
 let idOpening
 
-player.on('loadedmetadata',()=>{
-    rangeInput.max = player.duration
-    jsonop = JSON.parse(localStorage.getItem('openingJSON'))
-    for (el in jsonop) {
-        if (el === idOpening) {
-            rangeInput.value = jsonop[el].startTime
-        }
-    }
-    player.currentTime = Number(rangeInput.value)
-})
+// player.on('loadedmetadata',()=>{
+//     rangeInput.max = player.duration
+//     jsonop = JSON.parse(localStorage.getItem('openingJSON'))
+//     for (el in jsonop) {
+//         if (el === idOpening) {
+//             rangeInput.value = jsonop[el].startTime
+//         }
+//     }
+//     player.currentTime = Number(rangeInput.value)
+// })
 
-player.on('timeupdate',()=>{
-    if (player.currentTime >= (Number(rangeInput.value)+20)) {
-        player.currentTime = Number(rangeInput.value)
-    }
-})
+// player.on('timeupdate',()=>{
+//     if (player.currentTime >= (Number(rangeInput.value)+20)) {
+//         player.currentTime = Number(rangeInput.value)
+//     }
+// })
 
 function create () {
+    let tictokCreate = document.getElementById('tictokCreate').checked
+    console.log({"openings" : localStorage.getItem('openingJSON'), "tictokCreate" : tictokCreate})
     $.ajax({
         url: "/createVideo",
         type: "POST",
-        data: localStorage.getItem('openingJSON'),
+        data: JSON.stringify({"openings" : localStorage.getItem('openingJSON'), "tictokCreate" : tictokCreate}),
         contentType: "application/json",
         success : (res) => {
             console.log(res)
@@ -35,24 +37,24 @@ function create () {
     })
 }
 
-function animeChange(id) { 
-    idOpening = id
+function animeChange(picture, video) { 
+    // idOpening = id
     player.controls = [
         'play-large', // The large play button in the center
         'play', // Play/pause playback
         'mute', // Toggle mute
         'volume', // Volume control
     ]
+    console.log(video.split('/')[3])
     player.source = {
         type: 'video',
-        title: 'Example title',
         sources: [
             {
-                src: `videos/${id}.mp4`,
-                type: 'video/mp4'
+                src: `${video.split('/')[3]}`,
+                provider: 'youtube',
             }
         ],
-        poster : `screnshot/${id}.png`
+        poster : `${picture}`
     }
     player.play()
 }
@@ -77,10 +79,11 @@ arrOpening.forEach(el => {
         url : `/getVideo/${el}`,
         type : 'GET',
         success : function (result) {    
+            console.log(result)
             htmlTextAnime += `
-                <li class="redactor-content-list__item" id="${result.id}" onclick="animeChange(this.id)">
+                <li class="redactor-content-list__item" id="${result.id}" onclick="animeChange('${result.picture_url}','${result.video_url}')">
                     <div class="redactor-content-list__image">
-                        <img src="screnshot/${result.id}.png">
+                        <img src="${result.picture_url}">
                     </div>
                     <div class="redactor-content-list__data">
                         <h4 class="redactor-content-list__title">${result.name_ru}</h4>

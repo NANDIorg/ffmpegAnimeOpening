@@ -108,22 +108,22 @@
         url: "/getVideo",
         type: "GET",
         success: (result) => {
+            console.log(result)
             htmlText = ""
             result.forEach(el => {
-                let genres = ""
-                JSON.parse(el.genres).forEach(el2 => {
-                    genres += ', ' + el2 + ''
-                })
-                let genresArr = genres.split('')
-                genresArr.splice(0,1)
+                // let genres = ""
+                // JSON.parse(el.genres).forEach(el2 => {
+                //     genres += ', ' + el2 + ''
+                // })
+                // let genresArr = genres.split('')
+                // genresArr.splice(0,1)
                 htmlText += `
                     <li class="videos__item" onclick="video(this.id)" id="${el.id}">
                         <div class="videos__image">
-                            <img src="screnshot/${el.id}.png">
+                            <img src="${el.picture_url}">
                         </div>
                         <div class="videos__info">
                             <h2 class="videos__title">${el.name_ru}</h2>
-                            <p class="videos__genres">Жанры: ${genresArr.join('')}</p>
                             <date class="videos__release">Год выпуска: ${el.year}</date>
                         </div>
                     </li>`
